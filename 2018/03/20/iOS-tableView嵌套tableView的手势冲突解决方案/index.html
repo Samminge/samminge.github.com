@@ -89,19 +89,19 @@
 如下图的需求：">
 <meta property="og:type" content="article">
 <meta property="og:title" content="iOS tableView嵌套tableView的手势冲突解决方案">
-<meta property="og:url" content="http://yoursite.com/2017/09/20/iOS-tableView嵌套tableView的手势冲突解决方案/index.html">
+<meta property="og:url" content="http://yoursite.com/2018/03/20/iOS-tableView嵌套tableView的手势冲突解决方案/index.html">
 <meta property="og:site_name" content="Minge’s Blog">
 <meta property="og:description" content="都在忙公司的项目，很久没记录东西了，最近公司项目完成了第一个版本，闲了下来，总结了下公司项目里自己觉得有意思的一个点
 
 如下图的需求：">
-<meta property="og:image" content="http://yoursite.com/2017/09/20/iOS-tableView嵌套tableView的手势冲突解决方案/./xuqiu.png">
-<meta property="og:updated_time" content="2018-11-12T09:37:25.000Z">
+<meta property="og:image" content="http://yoursite.com/2018/03/20/iOS-tableView嵌套tableView的手势冲突解决方案/./xuqiu.png">
+<meta property="og:updated_time" content="2018-11-12T09:44:06.000Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="iOS tableView嵌套tableView的手势冲突解决方案">
 <meta name="twitter:description" content="都在忙公司的项目，很久没记录东西了，最近公司项目完成了第一个版本，闲了下来，总结了下公司项目里自己觉得有意思的一个点
 
 如下图的需求：">
-<meta name="twitter:image" content="http://yoursite.com/2017/09/20/iOS-tableView嵌套tableView的手势冲突解决方案/./xuqiu.png">
+<meta name="twitter:image" content="http://yoursite.com/2018/03/20/iOS-tableView嵌套tableView的手势冲突解决方案/./xuqiu.png">
 
 
 
@@ -129,7 +129,7 @@
 
 
 
-  <link rel="canonical" href="http://yoursite.com/2017/09/20/iOS-tableView嵌套tableView的手势冲突解决方案/"/>
+  <link rel="canonical" href="http://yoursite.com/2018/03/20/iOS-tableView嵌套tableView的手势冲突解决方案/"/>
 
 
 
@@ -238,7 +238,7 @@
   
 
   <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
-  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2017/09/20/iOS-tableView嵌套tableView的手势冲突解决方案/">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/03/20/iOS-tableView嵌套tableView的手势冲突解决方案/">
 
   <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
     <meta itemprop="name" content="Minge">
@@ -277,8 +277,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="Post created" itemprop="dateCreated datePublished" datetime="2017-09-20T17:16:27+08:00">
-                2017-09-20
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-03-20T17:16:27+08:00">
+                2018-03-20
               </time>
             
 
@@ -316,7 +316,7 @@
         <blockquote>
 <p>都在忙公司的项目，很久没记录东西了，最近公司项目完成了第一个版本，闲了下来，总结了下公司项目里自己觉得有意思的一个点</p>
 </blockquote>
-<p>如下图的需求：<br><a id="more"></a><br><img src="/2017/09/20/iOS-tableView嵌套tableView的手势冲突解决方案/./xuqiu.png" alt=""></p>
+<p>如下图的需求：<br><a id="more"></a><br><img src="/2018/03/20/iOS-tableView嵌套tableView的手势冲突解决方案/./xuqiu.png" alt=""></p>
 <p>可以看到最上面是一块轮播图组件,轮播图下面还有若干条其他的内容，而且这几块内容都是后台动态控制显示的，所以这里用<code>UIScrollView</code>设置顶部偏移量实现是很不方便的。最外层我肯定选择使用<code>tableView</code>分区管理来实现。而下面的横向分类页面肯定需要<code>tableView</code>去实现</p>
 <p>这样的话问题就来了，先不说下面的横向分页如何实现，这个页面必定需要在一个<code>tableView</code>中嵌套多个不同的<code>tableView</code>，但是如果嵌套了其他的<code>scrollView</code>，就需要我们判断不同条件下让哪个<code>scrollView</code>响应滑动事件，因此这里我们需要解决的就是手势的冲突问题。</p>
 <p>最开始想到的是在滑动<code>tableView</code>时候根据偏移量设置<code>scrollEnabled</code>来控制两个<code>tableView</code>的响应，但是会有个问题就是当滚动到顶部时用户必须第二次滑动才可以显示出外层的<code>tableView</code>，这样就会造成一个卡顿的效果，所以这个方法是行不通的。</p>
