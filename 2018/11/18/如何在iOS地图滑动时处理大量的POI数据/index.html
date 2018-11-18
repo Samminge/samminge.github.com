@@ -102,7 +102,7 @@
 <meta property="og:image" content="https://images.thoughtbot.com/ios-maps-blog-post-images/quadTreeInsert.gif">
 <meta property="og:image" content="https://images.thoughtbot.com/ios-maps-blog-post-images/quadTreeQuery.gif">
 <meta property="og:image" content="https://images.thoughtbot.com/ios-maps-blog-post-images/sets.png">
-<meta property="og:updated_time" content="2018-11-18T09:12:04.932Z">
+<meta property="og:updated_time" content="2018-11-18T09:22:21.700Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="如何在iOS地图滑动时处理大量的POI数据">
 <meta name="twitter:description" content="前言
@@ -335,7 +335,7 @@
 <p>这是App运行起来后的效果：<br><img src="https://images.thoughtbot.com/ios-maps-blog-post-images/AppFinalProduct.gif" alt=""></p>
 <h3 id="一-数据结构"><a href="#一-数据结构" class="headerlink" title="一.数据结构"></a>一.数据结构</h3><p>现在我们的核心问题是：我们需要查询出显示在屏幕上的所有的点，所以要想出一个查找算法，查找存在于一个矩形范围内的所有的点。</p>
 <p>如果遍历所有的点，然后判断（xMin&lt;=x&lt;=xMax并且yMin&lt;=y&lt;=yMax），很不幸，这是一个复杂度为O（N）的算法，显然不适合我们的情况。</p>
-<p>这里利用了对称性来减少查询范围。在每个区域内都加索引，这样可以有效减少查询范围。这种区域索引的方式可以用四叉树来实现。</p>
+<p>我们可以利用了对称性来减少查询范围。在每个区域内都加索引，这样可以有效减少查询范围。这种区域索引的方式可以用四叉树来实现。</p>
 <h3 id="二-四叉树"><a href="#二-四叉树" class="headerlink" title="二.四叉树"></a>二.四叉树</h3><p>四叉树是一个数据结构，由一系列的结点（node）构成。每个结点包含一个桶（bucket）跟一个包围框（boundingbox）。每个桶里面有一系列的点（point）。如果一个点包含在一个外包围框A中，就会被添加到A所在结点的桶（bucket）中。一旦这个结点的桶满了，这个结点就会分裂成四个子结点，每个子节点的包围框分别是当前结点包围框的1/4。分裂之后那些本来要放到当前结点桶中的点就都会放到子容器的桶中。</p>
 <p>那么我们该如何来对四叉树进行编码呢？</p>
 <p>我们先定义基本的结构：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">typedef struct TBQuadTreeNodeData &#123; </div><div class="line">    double x; </div><div class="line">    double y; </div><div class="line">    void* data; </div><div class="line">&#125; TBQuadTreeNodeData; </div><div class="line">TBQuadTreeNodeData TBQuadTreeNodeDataMake(double x, double y, void* data); </div><div class="line"> </div><div class="line">typedef struct TBBoundingBox &#123; </div><div class="line">    double x0; double y0; </div><div class="line">    double xf; double yf; </div><div class="line">&#125; TBBoundingBox; </div><div class="line">TBBoundingBox TBBoundingBoxMake(double x0, double y0, double xf, double yf); </div><div class="line"> </div><div class="line">typedef struct quadTreeNode &#123; </div><div class="line">    struct quadTreeNode* northWest; </div><div class="line">    struct quadTreeNode* northEast; </div><div class="line">    struct quadTreeNode* southWest; </div><div class="line">    struct quadTreeNode* southEast; </div><div class="line">    TBBoundingBox boundingBox; </div><div class="line">    int bucketCapacity; </div><div class="line">    TBQuadTreeNodeData *points; </div><div class="line">    int count; </div><div class="line">&#125; TBQuadTreeNode; </div><div class="line">TBQuadTreeNode* TBQuadTreeNodeMake(TBBoundingBox boundary, int bucketCapacity);</div></pre></td></tr></table></figure></p>
