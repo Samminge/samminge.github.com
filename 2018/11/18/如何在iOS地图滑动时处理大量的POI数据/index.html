@@ -1,0 +1,665 @@
+<!doctype html>
+
+
+
+  
+
+
+<html class="theme-next mist use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+  
+  
+  
+  
+
+  
+    
+    
+  
+
+  
+
+  
+
+  
+
+  
+
+  
+    
+    
+    <link href="//fonts.googleapis.com/css?family=Lato:300,300italic,400,400italic,700,700italic&subset=latin,latin-ext" rel="stylesheet" type="text/css">
+  
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.0" rel="stylesheet" type="text/css" />
+
+
+  <meta name="keywords" content="Hexo, NexT" />
+
+
+
+
+
+
+
+
+  <link rel="shortcut icon" type="image/x-icon" href="/images/favicon.ico?v=5.1.0" />
+
+
+
+
+
+
+<meta name="description" content="前言
+早两天在面试的时候，有遇到过一个问题，就是有大量的POI数据，要在地图上显示，如何做到比较流畅的显示
+
+当时我在思考这个问题时，给出的方案是以地图的点作为单位，滑动的时候判断新出现的点，然后判断是否在前一个显示地图的中心的划定的范围内，以这个为根据去判断时候要去加载新的数据。
+当时跟面试官交流的时候就发现这个方案可行性很低，效率太差了，肯定会造成滑动卡顿，后面回来的时候想了不少方案和思路，有">
+<meta property="og:type" content="article">
+<meta property="og:title" content="如何在iOS地图滑动时处理大量的POI数据">
+<meta property="og:url" content="http://yoursite.com/2018/11/18/如何在iOS地图滑动时处理大量的POI数据/index.html">
+<meta property="og:site_name" content="Minge’s Blog">
+<meta property="og:description" content="前言
+早两天在面试的时候，有遇到过一个问题，就是有大量的POI数据，要在地图上显示，如何做到比较流畅的显示
+
+当时我在思考这个问题时，给出的方案是以地图的点作为单位，滑动的时候判断新出现的点，然后判断是否在前一个显示地图的中心的划定的范围内，以这个为根据去判断时候要去加载新的数据。
+当时跟面试官交流的时候就发现这个方案可行性很低，效率太差了，肯定会造成滑动卡顿，后面回来的时候想了不少方案和思路，有">
+<meta property="og:image" content="https://images.thoughtbot.com/ios-maps-blog-post-images/AppFinalProduct.gif">
+<meta property="og:image" content="https://images.thoughtbot.com/ios-maps-blog-post-images/quadTreeInsert.gif">
+<meta property="og:image" content="https://images.thoughtbot.com/ios-maps-blog-post-images/quadTreeQuery.gif">
+<meta property="og:image" content="https://images.thoughtbot.com/ios-maps-blog-post-images/sets.png">
+<meta property="og:updated_time" content="2018-11-18T09:12:04.932Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="如何在iOS地图滑动时处理大量的POI数据">
+<meta name="twitter:description" content="前言
+早两天在面试的时候，有遇到过一个问题，就是有大量的POI数据，要在地图上显示，如何做到比较流畅的显示
+
+当时我在思考这个问题时，给出的方案是以地图的点作为单位，滑动的时候判断新出现的点，然后判断是否在前一个显示地图的中心的划定的范围内，以这个为根据去判断时候要去加载新的数据。
+当时跟面试官交流的时候就发现这个方案可行性很低，效率太差了，肯定会造成滑动卡顿，后面回来的时候想了不少方案和思路，有">
+<meta name="twitter:image" content="https://images.thoughtbot.com/ios-maps-blog-post-images/AppFinalProduct.gif">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Mist',
+    sidebar: {"position":"left","display":"hide"},
+    fancybox: true,
+    motion: true,
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://yoursite.com/2018/11/18/如何在iOS地图滑动时处理大量的POI数据/"/>
+
+
+
+
+
+  <title> 如何在iOS地图滑动时处理大量的POI数据 | Minge’s Blog </title>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+
+
+
+
+
+
+
+
+
+
+  
+  
+    
+  
+
+  <div class="container one-collumn sidebar-position-left page-post-detail ">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-meta ">
+  
+
+  <div class="custom-logo-site-title">
+    <a href="/"  class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <span class="site-title">Minge’s Blog</span>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+  </div>
+    
+      <p class="site-subtitle"></p>
+    
+</div>
+
+<div class="site-nav-toggle">
+  <button>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+    <span class="btn-bar"></span>
+  </button>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+
+      
+    </ul>
+  
+
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal " itemscope itemtype="http://schema.org/Article">
+  <link itemprop="mainEntityOfPage" href="http://yoursite.com/2018/11/18/如何在iOS地图滑动时处理大量的POI数据/">
+
+  <span style="display:none" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <meta itemprop="name" content="Minge">
+    <meta itemprop="description" content="">
+    <meta itemprop="image" content="/images/icon.png">
+  </span>
+
+  <span style="display:none" itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+    <meta itemprop="name" content="Minge’s Blog">
+    <span style="display:none" itemprop="logo" itemscope itemtype="http://schema.org/ImageObject">
+      <img style="display:none;" itemprop="url image" alt="Minge’s Blog" src="">
+    </span>
+  </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">
+            
+            
+              
+                如何在iOS地图滑动时处理大量的POI数据
+              
+            
+          </h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="Post created" itemprop="dateCreated datePublished" datetime="2018-11-18T15:50:51+08:00">
+                2018-11-18
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+
+          
+            
+          
+
+          
+
+          
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><blockquote>
+<p>早两天在面试的时候，有遇到过一个问题，就是有大量的POI数据，要在地图上显示，如何做到比较流畅的显示</p>
+</blockquote>
+<p>当时我在思考这个问题时，给出的方案是以地图的点作为单位，滑动的时候判断新出现的点，然后判断是否在前一个显示地图的中心的划定的范围内，以这个为根据去判断时候要去加载新的数据。</p>
+<p>当时跟面试官交流的时候就发现这个方案可行性很低，效率太差了，肯定会造成滑动卡顿，后面回来的时候想了不少方案和思路，有想过使用地图瓦片的方案，后来发现了一遍外文，个人感觉里面的方案非常好。<br><a id="more"></a></p>
+<blockquote>
+<p>ps.写在前面：关于在面试时提出的一个需求，就是等滑动到对应的地图页面时，再去请求网络数据，这个点我个人觉得有点问题，页面出现的时候再去请求数据，肯定会造成页面数据显示不及时。我也去看了面试公司的小程序，发现其实是根据城市或者地区去划分数据的，那么，我个人感觉可以在用户选择对应的城市或者地区时，就把对应的城市或者地区的数据返回，这样会存在一个问题，就是当用户滑动地图出了这个城市或者地区的时候，就没数据显示了，但是，既然用户选择的是这个城市或者地区，那么当滑动地图出了这个区域，就应当不显示这个区域外的数据了，不然会存在误导用户觉得这个区域外的数据还是属于用户选择的城市或者区域里面的数据。</p>
+</blockquote>
+<p>这里附上原文：<a href="https://robots.thoughtbot.com/" target="_blank" rel="external">How To Efficiently Display Large Amounts of Data on iOS Maps</a></p>
+<p>这里是阅读外文和Dome源码的分析和转载</p>
+<p>这是App运行起来后的效果：<br><img src="https://images.thoughtbot.com/ios-maps-blog-post-images/AppFinalProduct.gif" alt=""></p>
+<h3 id="一-数据结构"><a href="#一-数据结构" class="headerlink" title="一.数据结构"></a>一.数据结构</h3><p>现在我们的核心问题是：我们需要查询出显示在屏幕上的所有的点，所以要想出一个查找算法，查找存在于一个矩形范围内的所有的点。</p>
+<p>如果遍历所有的点，然后判断（xMin&lt;=x&lt;=xMax并且yMin&lt;=y&lt;=yMax），很不幸，这是一个复杂度为O（N）的算法，显然不适合我们的情况。</p>
+<p>这里利用了对称性来减少查询范围。在每个区域内都加索引，这样可以有效减少查询范围。这种区域索引的方式可以用四叉树来实现。</p>
+<h3 id="二-四叉树"><a href="#二-四叉树" class="headerlink" title="二.四叉树"></a>二.四叉树</h3><p>四叉树是一个数据结构，由一系列的结点（node）构成。每个结点包含一个桶（bucket）跟一个包围框（boundingbox）。每个桶里面有一系列的点（point）。如果一个点包含在一个外包围框A中，就会被添加到A所在结点的桶（bucket）中。一旦这个结点的桶满了，这个结点就会分裂成四个子结点，每个子节点的包围框分别是当前结点包围框的1/4。分裂之后那些本来要放到当前结点桶中的点就都会放到子容器的桶中。</p>
+<p>那么我们该如何来对四叉树进行编码呢？</p>
+<p>我们先定义基本的结构：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div></pre></td><td class="code"><pre><div class="line">typedef struct TBQuadTreeNodeData &#123; </div><div class="line">    double x; </div><div class="line">    double y; </div><div class="line">    void* data; </div><div class="line">&#125; TBQuadTreeNodeData; </div><div class="line">TBQuadTreeNodeData TBQuadTreeNodeDataMake(double x, double y, void* data); </div><div class="line"> </div><div class="line">typedef struct TBBoundingBox &#123; </div><div class="line">    double x0; double y0; </div><div class="line">    double xf; double yf; </div><div class="line">&#125; TBBoundingBox; </div><div class="line">TBBoundingBox TBBoundingBoxMake(double x0, double y0, double xf, double yf); </div><div class="line"> </div><div class="line">typedef struct quadTreeNode &#123; </div><div class="line">    struct quadTreeNode* northWest; </div><div class="line">    struct quadTreeNode* northEast; </div><div class="line">    struct quadTreeNode* southWest; </div><div class="line">    struct quadTreeNode* southEast; </div><div class="line">    TBBoundingBox boundingBox; </div><div class="line">    int bucketCapacity; </div><div class="line">    TBQuadTreeNodeData *points; </div><div class="line">    int count; </div><div class="line">&#125; TBQuadTreeNode; </div><div class="line">TBQuadTreeNode* TBQuadTreeNodeMake(TBBoundingBox boundary, int bucketCapacity);</div></pre></td></tr></table></figure></p>
+<p>TBQuadTreeNodeData结构包含了坐标点（纬度，经度）。void*data是一个普通的指针，用来存储我们需要的其他信息，如旅馆名跟电话号码。TBBoundingBox代表一个用于范围查询的长方形，也就是之前谈到(xMin&lt;=x&lt;=xMax&amp;&amp;yMin&lt;=y&lt;=yMax)查询的那个长方形。左上角是(xMin,yMin)，右下角是(xMax,yMax)。</p>
+<p>最后，我们看下TBQuadTreeNode结构，这个结构包含了四个指针，每个指针分别指向这个结点的四个子节点。它还有一个外包围框和一个数组（数组中就是那个包含一系列坐标点的桶）。</p>
+<p>在我们建立完四叉树的同时，空间上的索引也就同时形成了。这是生成四叉树的演示动画。</p>
+<p><img src="https://images.thoughtbot.com/ios-maps-blog-post-images/quadTreeInsert.gif" alt=""></p>
+<p>下面的代码准确描述了以上动画的过程：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div></pre></td><td class="code"><pre><div class="line">void TBQuadTreeNodeSubdivide(TBQuadTreeNode* node) </div><div class="line">&#123; </div><div class="line">    TBBoundingBox box = node-&gt;boundingBox; </div><div class="line"> </div><div class="line">    double xMid = (box.xf + box.x0) / 2.0; </div><div class="line">    double yMid = (box.yf + box.y0) / 2.0; </div><div class="line"> </div><div class="line">    TBBoundingBox northWest = TBBoundingBoxMake(box.x0, box.y0, xMid, yMid); </div><div class="line">    node-&gt;northWest = TBQuadTreeNodeMake(northWest, node-&gt;bucketCapacity); </div><div class="line"> </div><div class="line">    TBBoundingBox northEast = TBBoundingBoxMake(xMid, box.y0, box.xf, yMid); </div><div class="line">    node-&gt;northEast = TBQuadTreeNodeMake(northEast, node-&gt;bucketCapacity); </div><div class="line"> </div><div class="line">    TBBoundingBox southWest = TBBoundingBoxMake(box.x0, yMid, xMid, box.yf); </div><div class="line">    node-&gt;southWest = TBQuadTreeNodeMake(southWest, node-&gt;bucketCapacity); </div><div class="line"> </div><div class="line">    TBBoundingBox southEast = TBBoundingBoxMake(xMid, yMid, box.xf, box.yf); </div><div class="line">    node-&gt;southEast = TBQuadTreeNodeMake(southEast, node-&gt;bucketCapacity); </div><div class="line">&#125; </div><div class="line"> </div><div class="line">bool TBQuadTreeNodeInsertData(TBQuadTreeNode* node, TBQuadTreeNodeData data) </div><div class="line">&#123; </div><div class="line">    // Bail if our coordinate is not in the boundingBox </div><div class="line">    if (!TBBoundingBoxContainsData(node-&gt;boundingBox, data)) &#123; </div><div class="line">        return false; </div><div class="line">    &#125; </div><div class="line"> </div><div class="line">    // Add the coordinate to the points array </div><div class="line">    if (node-&gt;count &lt; node-&gt;bucketCapacity) &#123; </div><div class="line">        node-&gt;points[node-&gt;count++] = data; </div><div class="line">        return true; </div><div class="line">    &#125; </div><div class="line"> </div><div class="line">    // Check to see if the current node is a leaf, if it is, split </div><div class="line">    if (node-&gt;northWest == NULL) &#123; </div><div class="line">        TBQuadTreeNodeSubdivide(node); </div><div class="line">    &#125; </div><div class="line"> </div><div class="line">    // Traverse the tree </div><div class="line">    if (TBQuadTreeNodeInsertData(node-&gt;northWest, data)) return true; </div><div class="line">    if (TBQuadTreeNodeInsertData(node-&gt;northEast, data)) return true; </div><div class="line">    if (TBQuadTreeNodeInsertData(node-&gt;southWest, data)) return true; </div><div class="line">    if (TBQuadTreeNodeInsertData(node-&gt;southEast, data)) return true; </div><div class="line"> </div><div class="line">    return false; </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>完成了四叉树的构造，还需要在四叉树上进行区域范围查询并返回TBQuadTreeNodeData结构。<br>以下是区域范围查询的演示动画，在浅蓝区域内的是所有的标注点。当标注点被查询到在指定的区域范围内，则会被标注为绿色。</p>
+<p><img src="https://images.thoughtbot.com/ios-maps-blog-post-images/quadTreeQuery.gif" alt=""></p>
+<p>以下是查询代码：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line">typedef void(^TBDataReturnBlock)(TBQuadTreeNodeData data); </div><div class="line"> </div><div class="line">void TBQuadTreeGatherDataInRange(TBQuadTreeNode* node, TBBoundingBox range, TBDataReturnBlock block) </div><div class="line">&#123; </div><div class="line">    // If range is not contained in the node&apos;s boundingBox then bail </div><div class="line">    if (!TBBoundingBoxIntersectsBoundingBox(node-&gt;boundingBox, range)) &#123; </div><div class="line">        return; </div><div class="line">    &#125; </div><div class="line"> </div><div class="line">    for (int i = 0; i &lt; node-&gt;count; i++) &#123; </div><div class="line">        // Gather points contained in range </div><div class="line">        if (TBBoundingBoxContainsData(range, node-&gt;points[i])) &#123; </div><div class="line">            block(node-&gt;points[i]); </div><div class="line">        &#125; </div><div class="line">    &#125; </div><div class="line">     </div><div class="line">    // Bail if node is leaf </div><div class="line">    if (node-&gt;northWest == NULL) &#123; </div><div class="line">        return; </div><div class="line">    &#125; </div><div class="line"> </div><div class="line">    // Otherwise traverse down the tree </div><div class="line">    TBQuadTreeGatherDataInRange(node-&gt;northWest, range, block); </div><div class="line">    TBQuadTreeGatherDataInRange(node-&gt;northEast, range, block); </div><div class="line">    TBQuadTreeGatherDataInRange(node-&gt;southWest, range, block); </div><div class="line">    TBQuadTreeGatherDataInRange(node-&gt;southEast, range, block); </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>到这里，基本解决了因为查询速度过慢而导致页面滑动卡顿的问题</p>
+<p>下面就是对标注的显示和隐藏的处理。</p>
+<p>开始之前，先看下面的图片</p>
+<p><img src="https://images.thoughtbot.com/ios-maps-blog-post-images/sets.png" alt=""></p>
+<p>左边的屏幕截图是地图进行滑动前的地图快照。这个快照中的标注就是目前mapView中的标注，我们称这个为“before集合”。</p>
+<p>右边的屏幕截图是地图进行滑动后的地图快照。这个快照中的标注就是从clusteredAnnotationsWithinMapRect:withZoomScale:这个函数中得到的返回值。我们称这个为“after集合”。</p>
+<p>我们期望保留两个快照中都存在的标注点（即重合的那些标注点），去除在“after集合”中不存在的那些标注点，同时添加那些新的标注点。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">- (void)updateMapViewAnnotationsWithAnnotations:(NSArray *)annotations </div><div class="line">&#123; </div><div class="line">    NSMutableSet *before = [NSMutableSet setWithArray:self.mapView.annotations]; </div><div class="line">    NSSet *after = [NSSet setWithArray:annotations]; </div><div class="line"> </div><div class="line">    // Annotations circled in blue shared by both sets </div><div class="line">    NSMutableSet *toKeep = [NSMutableSet setWithSet:before]; </div><div class="line">    [toKeep intersectSet:after]; </div><div class="line"> </div><div class="line">    // Annotations circled in green </div><div class="line">    NSMutableSet *toAdd = [NSMutableSet setWithSet:after]; </div><div class="line">    [toAdd minusSet:toKeep]; </div><div class="line"> </div><div class="line">    // Annotations circled in red </div><div class="line">    NSMutableSet *toRemove = [NSMutableSet setWithSet:before]; </div><div class="line">    [toRemove minusSet:after]; </div><div class="line"> </div><div class="line">    // These two methods must be called on the main thread </div><div class="line">    [[NSOperationQueue mainQueue] addOperationWithBlock:^&#123; </div><div class="line">        [self.mapView addAnnotations:[toAdd allObjects]]; </div><div class="line">        [self.mapView removeAnnotations:[toRemove allObjects]]; </div><div class="line">    &#125;]; </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这样我们尽可能的确保在主线程上做少量的工作，从而提升地图滑动的流畅性。</p>
+<p>那么到目前为止，基本就解决了面试时遇到的问题</p>
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+    <div>
+      
+        
+
+      
+    </div>
+
+
+    <footer class="post-footer">
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/03/20/iOS-tableView嵌套tableView的手势冲突解决方案/" rel="next" title="iOS tableView嵌套tableView的手势冲突解决方案">
+                <i class="fa fa-chevron-left"></i> iOS tableView嵌套tableView的手势冲突解决方案
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+          
+          </div>
+          
+
+
+          
+  <div class="comments" id="comments">
+    
+  </div>
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap" >
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+          <img class="site-author-image" itemprop="image"
+               src="/images/icon.png"
+               alt="Minge" />
+          <p class="site-author-name" itemprop="name">Minge</p>
+          <p class="site-description motion-element" itemprop="description">用心生活，我就是不一样的烟火</p>
+        </div>
+        <nav class="site-state motion-element">
+        
+          
+            <div class="site-state-item site-state-posts">
+              <a href="/archives">
+                <span class="site-state-item-count">6</span>
+                <span class="site-state-item-name">日志</span>
+              </a>
+            </div>
+          
+
+          
+
+          
+
+        </nav>
+
+        
+
+        <div class="links-of-author motion-element">
+          
+        </div>
+
+        
+        
+
+        
+        
+
+        
+
+
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#前言"><span class="nav-number">1.</span> <span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#一-数据结构"><span class="nav-number">2.</span> <span class="nav-text">一.数据结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#二-四叉树"><span class="nav-number">3.</span> <span class="nav-text">二.四叉树</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright" >
+  
+  &copy; 
+  <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">Minge</span>
+</div>
+
+
+<div class="powered-by">
+  由 <a class="theme-link" href="https://hexo.io">Hexo</a> 强力驱动
+</div>
+
+<div class="theme-info">
+  主题 -
+  <a class="theme-link" href="https://github.com/iissnan/hexo-theme-next">
+    NexT.Mist
+  </a>
+</div>
+
+
+        
+
+        
+      </div>
+    </footer>
+
+    <div class="back-to-top">
+      <i class="fa fa-arrow-up"></i>
+    </div>
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+  
+  <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+
+  
+  <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+
+  
+  <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+
+  
+  <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.0"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.0"></script>
+
+
+
+  
+  
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.0"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.0"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.0"></script>
+
+
+
+  
+
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+  
+      <!-- UY BEGIN -->
+      <script type="text/javascript" src="http://v2.uyan.cc/code/uyan.js?uid="></script>
+      <!-- UY END -->
+  
+
+
+
+
+  
+  
+
+  
+
+  
+
+  
+
+  
+
+
+</body>
+</html>
